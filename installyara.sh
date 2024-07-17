@@ -14,7 +14,7 @@ IFS=$(echo -en "\n\b")
 # Static active response parameters
 LOCAL=`dirname $0`
 #------------------------- Folder where Yara rules (files) will be placed -------------------------#
-
+mkdir /tmp/quarantined
 command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
