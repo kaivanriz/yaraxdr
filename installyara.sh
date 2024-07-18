@@ -31,12 +31,16 @@ install_yara() {
   mv yara /usr/bin/
   mv yarac /usr/bin/
 }
+instsall_yara2(){
+    yum install yara 
+}
+
 
 if command_exists yara; then
   echo "Yara is already installed."
 
 else
-  install_yara
+  install_yara2
   echo "Yara installation script completed."
 
 fi
