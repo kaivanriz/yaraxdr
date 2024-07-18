@@ -6,7 +6,7 @@ YARA_SCRIPT_URL="https://raw.githubusercontent.com/kaivanriz/yaraxdr/main/yara.s
 
 # Function to check if Wazuh agent is installed
 check_wazuh_agent_installed() {
-  if ! command -v /var/ossec/wazuh-control status > /dev/null; then
+  if ! command -v /var/ossec/bin/wazuh-control status > /dev/null; then
     echo "Wazuh agent is not installed. Please install the Wazuh agent first."
     exit 1
   fi
