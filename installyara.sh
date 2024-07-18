@@ -31,7 +31,7 @@ install_yara() {
   mv yara /usr/bin/
   mv yarac /usr/bin/
 }
-install_yara(){
+install_yara2(){
     yum install yara 
 }
 
