@@ -39,7 +39,7 @@ fi
 #------------------------- Main workflow --------------------------#
 
 # Execute Yara scan on the specified filename
-yara_output="$("${YARA_PATH}"/yara -C -w -r -f -m "$YARA_RULES" "$FILENAME")"
+yara_output="$(/usr/bin/yara -C -w -r -f -m /usr/local/signature-base/yara_base_ruleset_compiled.yar "$FILENAME")"
 
 if [[ $yara_output != "" ]]
 then
