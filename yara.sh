@@ -47,6 +47,7 @@ then
     while read -r line; do
         echo "wazuh-yara: INFO - Scan result: $line" >> ${LOG_FILE}
     done <<< "$yara_output"
+    FILEBASE=$(/usr/bin/basename $FILENAME)
     TIMESTAMP=$(date +%Y%m%d_%H%M%S)
     NEW_FILENAME="${TIMESTAMP}_${FILEBASE}"
     /usr/bin/mv -f $FILENAME "${QUARANTINE_PATH}/${NEW_FILENAME}"
