@@ -73,7 +73,7 @@ yara_rules_list="/usr/local/signature-base/yara_rules_list.yar"
 cd $git_repo_folder
 
 
-git pull https://github.com/Neo23x0/signature-base.git
+git pull https://github.com/noplanalderson/yara_rules.git
 
 # Remove .yar files not compatible with standard Yara package
 rm -f $git_repo_folder/yara/gen_fake_amsi_dll.yar
