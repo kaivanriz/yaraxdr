@@ -17,6 +17,11 @@ YARA_RULES=$(echo $INPUT_JSON | jq -r .parameters.extra_args[3])
 FILENAME=$(echo $INPUT_JSON | jq -r .parameters.alert.syscheck.path)
 QUARANTINE_PATH="/tmp/quarantined"
 
+# Create QUARANTINE_PATH if it does not exist
+if [ ! -d "$QUARANTINE_PATH" ]; then
+    mkdir -p "$QUARANTINE_PATH"
+fi
+
 # Set LOG_FILE path
 LOG_FILE="/var/ossec/logs/active-responses.log"
 
