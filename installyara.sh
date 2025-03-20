@@ -1,6 +1,6 @@
 #!/bin/bash
 # Yara rules - Compiled file creation
-# Copyright (C) SOCFortress, LLP.
+# Copyright (C) TangerangKota-CSIRT - 2025.
 #
 # This program is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public
@@ -82,6 +82,26 @@ else
         *) install_yara_from_source ;;
     esac
     echo "Yara installation completed."
+fi
+echo "INFO: Checking YARA path..."
+yara_path=$(find / -type f -name "yara" 2>/dev/null | head -n 1)
+
+if [ -f "/usr/bin/yara" ]; then
+    echo "INFO: YARA already exists in /usr/bin"
+else
+    if [ -n "$yara_path" ]; then
+        # If yara was found somewhere
+        echo "INFO: Found YARA at: $yara_path"
+        if sudo cp "$yara_path" /usr/bin/; then
+            echo "Successfully copied yara to /usr/bin"
+        else
+            echo "Error: Failed to copy yara to /usr/bin"
+        fi
+    else
+        echo "Error: Could not find yara binary on the system."
+        echo "WARNING: Installing YARA from source..."
+        install_yara_from_source
+    fi
 fi
 
 # Git repository setup
