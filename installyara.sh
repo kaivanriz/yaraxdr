@@ -31,7 +31,7 @@ install_build_dependencies() {
     case "$OS_FAMILY" in
         "ubuntu"|"debian")
             sudo apt update && sudo apt install -y build-essential automake libtool pkg-config wget git ;; 
-        "centos"|"rhel"|"fedora")
+        "centos"|"rhel"|"fedora"|"almalinux")
             sudo yum groupinstall -y "Development Tools" && sudo yum install -y automake libtool pkg-config wget git ;;
         "macos")
             brew install automake libtool pkg-config wget ;;
@@ -50,13 +50,13 @@ install_yara_from_source() {
   wget -N https://github.com/VirusTotal/yara/archive/refs/tags/v4.5.1.tar.gz
   tar -zxf v4.5.1.tar.gz
   cd yara-4.5.1 || exit 1
-  ./bootstrap.sh
+  autoreconf -fi
   ./configure
   make
   sudo make install
   make check
-  mv yara /usr/bin/
-  mv yarac /usr/bin/
+  sudo mv /usr/local/bin/yara /usr/bin/
+  sudo mv /usr/local/bin/yarac /usr/bin/
 }
 
 install_yara_linux() {
@@ -77,7 +77,7 @@ if command_exists yara; then
 else
     case "$OS_FAMILY" in
         "ubuntu"|"debian") sudo apt update && sudo apt install -y yara ;; 
-        "centos"|"rhel"|"fedora") install_yara_linux ;;
+        "centos"|"rhel"|"fedora"|"almalinux") install_yara_linux ;;
         "macos") install_yara_macos ;;
         *) install_yara_from_source ;;
     esac
