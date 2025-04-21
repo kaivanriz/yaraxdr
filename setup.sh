@@ -81,12 +81,12 @@ setup_yara_active_response() {
         echo "ERROR: Failed to copy yara.sh to Wazuh active response directory."
         exit 1
     fi
-    if ! chmod +x "$WAZUH_AR_DIR/yara.sh"; then
+    if ! chmod u+x "$WAZUH_AR_DIR/yara.sh"; then
         log_message "ERROR: Failed to set executable permissions for $WAZUH_AR_DIR/yara.sh."
         echo "ERROR: Failed to set permissions for yara.sh."
         exit 1
     fi
-    if ! chown root:root "$WAZUH_AR_DIR/yara.sh"; then
+    if ! chown root:wazuh "$WAZUH_AR_DIR/yara.sh"; then
         log_message "WARNING: Failed to set ownership for $WAZUH_AR_DIR/yara.sh."
         echo "WARNING: Failed to set ownership for yara.sh."
     fi
