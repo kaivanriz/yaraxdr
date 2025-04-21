@@ -22,8 +22,7 @@ Yara XDR for Wazuh
 3. Install Yara
 ``` bash
 # cd /home/yaraxdr-main
-# chmod +x setup.sh
-# ./setup.sh
+# bash setup.sh
 ```
 
 3. Configure Wazuh Agent
