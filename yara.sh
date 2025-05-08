@@ -22,15 +22,12 @@ log_message() {
     echo "wazuh-yara: $(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"
 }
 
-# Debug input
-log_message "DEBUG - Input JSON: $INPUT_JSON"
-
 # Create QUARANTINE_PATH if it does not exist
 mkdir -p "$QUARANTINE_PATH" || {
     log_message "ERROR - Failed to create quarantine directory: $QUARANTINE_PATH"
     exit 1
 }
-chown ossec:ossec "$QUARANTINE_PATH"
+chown root:root "$QUARANTINE_PATH"
 chmod 700 "$QUARANTINE_PATH"
 
 #----------------------- Analyze parameters -----------------------#
@@ -47,11 +44,6 @@ fi
 
 if [[ ! -f "$YARA_RULES" ]]; then
     log_message "ERROR - Yara rules file not found: $YARA_RULES"
-    exit 1
-fi
-
-if [[ ! -f "$FILENAME" ]]; then
-    log_message "ERROR - File does not exist: $FILENAME"
     exit 1
 fi
 
@@ -76,14 +68,14 @@ fi
 # Execute Yara scan
 yara_output="$("$YARA_PATH" -C -w -r -f -m "$YARA_RULES" "$FILENAME" 2>&1)"
 if [[ $? -ne 0 ]]; then
-    log_message "ERROR - Yara scan failed: $yara_output"
+    log_message "WARNING - Yara scan failed: $yara_output"
     exit 1
 fi
 
 if [[ -n "$yara_output" ]]; then
     # Log each detected rule
     while read -r line; do
-        log_message "INFO - Scan result: $line"
+        log_message "ALERT - Scan result: $line"
     done <<< "$yara_output"
 
     # Quarantine the file
