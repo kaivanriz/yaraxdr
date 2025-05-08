@@ -28,6 +28,38 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# Function to install jq if not already installed
+install_jq() {
+    if ! command_exists jq; then
+        log_message "INFO: jq is not installed. Installing jq..."
+        if command_exists apt-get; then
+            if ! apt-get update && apt-get install -y jq; then
+                log_message "ERROR: Failed to install jq using apt-get."
+                echo "ERROR: Failed to install jq. Please install it manually."
+                exit 1
+            fi
+        elif command_exists yum; then
+            if ! yum install -y jq; then
+                log_message "ERROR: Failed to install jq using yum."
+                echo "ERROR: Failed to install jq. Please install it manually."
+                exit 1
+            fi
+        else
+            log_message "ERROR: Package manager not supported for jq installation."
+            echo "ERROR: Unsupported package manager. Please install jq manually."
+            exit 1
+        fi
+        log_message "INFO: jq installed successfully."
+        echo "INFO: jq installed successfully."
+    else
+        log_message "INFO: jq is already installed."
+        echo "INFO: jq is already installed."
+    fi
+}
+
+# Install jq if not already installed
+install_jq
+
 # Function to check if Wazuh agent is installed and running
 check_wazuh_agent() {
     if ! command_exists /var/ossec/bin/wazuh-control; then
