@@ -7,57 +7,97 @@
 # License (version 2) as published by the FSF - Free Software
 # Foundation.
 
-
 #------------------------- Gather parameters -------------------------#
 
 # Extra arguments
 read INPUT_JSON
-YARA_PATH=$(echo $INPUT_JSON | jq -r .parameters.extra_args[1])
-YARA_RULES=$(echo $INPUT_JSON | jq -r .parameters.extra_args[3])
-FILENAME=$(echo $INPUT_JSON | jq -r .parameters.alert.syscheck.path)
+YARA_PATH=$(echo "$INPUT_JSON" | jq -r .parameters.extra_args[1])
+YARA_RULES=$(echo "$INPUT_JSON" | jq -r .parameters.extra_args[3])
+FILENAME=$(echo "$INPUT_JSON" | jq -r .parameters.alert.syscheck.path)
 QUARANTINE_PATH="/tmp/quarantined"
-
-# Create QUARANTINE_PATH if it does not exist
-if [ ! -d "$QUARANTINE_PATH" ]; then
-    mkdir -p "$QUARANTINE_PATH"
-fi
-
-# Set LOG_FILE path
 LOG_FILE="/var/ossec/logs/active-responses.log"
 
-size=0
-actual_size=$(stat -c %s ${FILENAME})
-while [ ${size} -ne ${actual_size} ]; do
-    sleep 1
-    size=${actual_size}
-    actual_size=$(stat -c %s ${FILENAME})
-done
+# Logging function
+log_message() {
+    echo "wazuh-yara: $(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"
+}
+
+# Debug input
+log_message "DEBUG - Input JSON: $INPUT_JSON"
+
+# Create QUARANTINE_PATH if it does not exist
+mkdir -p "$QUARANTINE_PATH" || {
+    log_message "ERROR - Failed to create quarantine directory: $QUARANTINE_PATH"
+    exit 1
+}
+chown ossec:ossec "$QUARANTINE_PATH"
+chmod 700 "$QUARANTINE_PATH"
 
 #----------------------- Analyze parameters -----------------------#
 
-if [[ ! $YARA_PATH ]] || [[ ! $YARA_RULES ]]
-then
-    echo "Wazuh- "${FILENAME}" yara: ERROR - Yara active response error. Yara path and rules parameters are mandatory." >> ${LOG_FILE}
+if [[ ! "$YARA_PATH" ]] || [[ ! "$YARA_RULES" ]]; then
+    log_message "ERROR - Yara path and rules parameters are mandatory."
+    exit 1
+fi
+
+if [[ ! -x "$YARA_PATH" ]]; then
+    log_message "ERROR - Yara binary not executable: $YARA_PATH"
+    exit 1
+fi
+
+if [[ ! -f "$YARA_RULES" ]]; then
+    log_message "ERROR - Yara rules file not found: $YARA_RULES"
+    exit 1
+fi
+
+if [[ ! -f "$FILENAME" ]]; then
+    log_message "ERROR - File does not exist: $FILENAME"
+    exit 1
+fi
+
+# Wait for file size to stabilize with timeout
+size=0
+actual_size=$(stat -c %s "$FILENAME" 2>/dev/null || echo 0)
+timeout=30
+elapsed=0
+while [ "$size" -ne "$actual_size" ] && [ "$elapsed" -lt "$timeout" ]; do
+    sleep 1
+    size="$actual_size"
+    actual_size=$(stat -c %s "$FILENAME" 2>/dev/null || echo 0)
+    elapsed=$((elapsed + 1))
+done
+if [ "$elapsed" -ge "$timeout" ]; then
+    log_message "ERROR - Timeout waiting for file size stabilization: $FILENAME"
     exit 1
 fi
 
 #------------------------- Main workflow --------------------------#
 
-# Execute Yara scan on the specified filename
-yara_output="$(/usr/bin/yara -C -w -r -f -m /usr/local/signature-base/yara_base_ruleset_compiled.yar "$FILENAME")"
-
-if [[ $yara_output != "" ]]
-then
-    # Iterate every detected rule and append it to the LOG_FILE
-    while read -r line; do
-        echo "wazuh-yara: INFO - Scan result: $line" >> ${LOG_FILE}
-    done <<< "$yara_output"
-    FILEBASE=$(/usr/bin/basename $FILENAME)
-    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-    NEW_FILENAME="${TIMESTAMP}_${FILEBASE}"
-    /usr/bin/mv -f $FILENAME "${QUARANTINE_PATH}/${NEW_FILENAME}"
-    /usr/bin/chattr -R +i "${QUARANTINE_PATH}/${NEW_FILENAME}"
-    /usr/bin/echo "wazuh-yara: $FILENAME moved to ${QUARANTINE_PATH}/${NEW_FILENAME}" >> ${LOG_FILE}
+# Execute Yara scan
+yara_output="$("$YARA_PATH" -C -w -r -f -m "$YARA_RULES" "$FILENAME" 2>&1)"
+if [[ $? -ne 0 ]]; then
+    log_message "ERROR - Yara scan failed: $yara_output"
+    exit 1
 fi
 
-exit 0;
+if [[ -n "$yara_output" ]]; then
+    # Log each detected rule
+    while read -r line; do
+        log_message "INFO - Scan result: $line"
+    done <<< "$yara_output"
+
+    # Quarantine the file
+    FILEBASE=$(basename "$FILENAME")
+    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+    NEW_FILENAME="${TIMESTAMP}_${FILEBASE}"
+    mv -f "$FILENAME" "${QUARANTINE_PATH}/${NEW_FILENAME}" || {
+        log_message "ERROR - Failed to move $FILENAME to ${QUARANTINE_PATH}/${NEW_FILENAME}"
+        exit 1
+    }
+    chattr -R +i "${QUARANTINE_PATH}/${NEW_FILENAME}" || {
+        log_message "WARNING - Failed to set immutable attribute on ${QUARANTINE_PATH}/${NEW_FILENAME}"
+    }
+    log_message "INFO - $FILENAME moved to ${QUARANTINE_PATH}/${NEW_FILENAME}"
+fi
+
+exit 0
