@@ -15,13 +15,12 @@ Yara XDR for Wazuh
 2. Download and Extract
 ``` bash
 # cd /home
-# wget https://github.com/kaivanriz/yaraxdr/archive/refs/heads/main.zip
-# unzip main.zip
+# git clone https://github.com/kaivanriz/yaraxdr.git
 ```
 
 3. Install Yara
 ``` bash
-# cd /home/yaraxdr-main
+# cd /home/yaraxdr
 # bash setup.sh
 ```
 
