@@ -1,17 +1,9 @@
 #!/bin/bash
 # Yara rules - Compiled file creation
 # Copyright (C) TangerangKota-CSIRT - 2025.
-#
-# This program is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public
-# License (version 2) as published by the FSF - Free Software
-# Foundation.
 
-# Adjust IFS to read files
 SAVEIFS=$IFS
 IFS=$(echo -en "\n\b")
-
-# Static active response parameters
 LOCAL=$(dirname "$0")
 
 # Detect OS type
@@ -26,37 +18,38 @@ elif [[ "$OS_TYPE" == "Linux" ]]; then
     OS_FAMILY="linux"
 fi
 
-# Install required packages for compiling from source
 install_build_dependencies() {
     case "$OS_FAMILY" in
         "ubuntu"|"debian")
-            sudo apt update && sudo apt install -y build-essential automake libtool pkg-config wget git ;; 
-        "centos"|"rhel"|"fedora"|"almalinux")
-            sudo yum groupinstall -y "Development Tools" && sudo yum install -y automake libtool pkg-config wget git ;;
+            sudo apt update
+            sudo apt install -y build-essential automake libtool pkg-config wget git libssl-dev libjansson-dev libmagic-dev
+            ;;
+        "centos"|"rhel"|"fedora"|"almalinux"|"rocky")
+            sudo dnf groupinstall -y "Development Tools"
+            sudo dnf install -y automake libtool pkgconf-pkg-config wget git openssl-devel jansson-devel file-devel
+            ;;
         "macos")
-            brew install automake libtool pkg-config wget ;;
+            brew install automake libtool pkg-config wget
+            ;;
     esac
 }
 
-# Create quarantine folder
-mkdir -p /tmp/quarantined
+install_yara_from_source() {
+    install_build_dependencies
+    wget -N https://github.com/VirusTotal/yara/archive/refs/tags/v4.5.1.tar.gz
+    tar -zxf v4.5.1.tar.gz
+    cd yara-4.5.1 || exit 1
+    autoreconf -fi
+    ./configure --enable-magic --enable-cuckoo --enable-dotnet
+    make
+    sudo make install
+    make check
+    sudo mv /usr/local/bin/yara /usr/bin/
+    sudo mv /usr/local/bin/yarac /usr/bin/
+}
 
 command_exists() {
     command -v "$1" >/dev/null 2>&1
-}
-
-install_yara_from_source() {
-  install_build_dependencies
-  wget -N https://github.com/VirusTotal/yara/archive/refs/tags/v4.5.1.tar.gz
-  tar -zxf v4.5.1.tar.gz
-  cd yara-4.5.1 || exit 1
-  autoreconf -fi
-  ./configure
-  make
-  sudo make install
-  make check
-  sudo mv /usr/local/bin/yara /usr/bin/
-  sudo mv /usr/local/bin/yarac /usr/bin/
 }
 
 install_yara_linux() {
@@ -73,24 +66,24 @@ install_yara_macos() {
 
 # Install Yara based on OS
 if command_exists yara; then
-    echo "Yara is already installed."
+    echo "YARA is already installed."
 else
     case "$OS_FAMILY" in
-        "ubuntu"|"debian") sudo apt update && sudo apt install -y yara ;; 
-        "centos"|"rhel"|"fedora"|"almalinux") install_yara_linux ;;
+        "ubuntu"|"debian") sudo apt update && sudo apt install -y yara ;;
+        "centos"|"rhel"|"fedora"|"almalinux"|"rocky") install_yara_linux ;;
         "macos") install_yara_macos ;;
         *) install_yara_from_source ;;
     esac
-    echo "Yara installation completed."
+    echo "YARA installation completed."
 fi
+
 echo "INFO: Checking YARA path..."
-yara_path=$(find / -type f -name "yara" 2>/dev/null | head -n 1)
+yara_path=$(find / -type f -name "yara" 2>/dev/null | grep -m1 "/yara$")
 
 if [ -f "/usr/bin/yara" ]; then
-    echo "INFO: YARA already exists in /usr/bin"
+    echo "INFO: YARA exists in /usr/bin"
 else
     if [ -n "$yara_path" ]; then
-        # If yara was found somewhere
         echo "INFO: Found YARA at: $yara_path"
         if sudo cp "$yara_path" /usr/bin/; then
             echo "Successfully copied yara to /usr/bin"
@@ -98,8 +91,7 @@ else
             echo "Error: Failed to copy yara to /usr/bin"
         fi
     else
-        echo "Error: Could not find yara binary on the system."
-        echo "WARNING: Installing YARA from source..."
+        echo "ERROR: YARA not found. Reinstalling from source..."
         install_yara_from_source
     fi
 fi
@@ -139,7 +131,6 @@ for rule in "${yara_blacklist[@]}"; do
     rm -f "$git_repo_folder/yara/$rule"
 done
 
-# Download replacement rule
 wget -P "$git_repo_folder/yara/" https://raw.githubusercontent.com/CpanelInc/tech-CSI/master/php_webshell_rules.yara
 
 # Create and compile Yara rules
@@ -152,5 +143,6 @@ for f in "$git_repo_folder/yara"/*.yar; do
 done
 
 yarac "$yara_rules_list" "$git_repo_folder/yara_base_ruleset_compiled.yar"
+
 IFS=$SAVEIFS
 exit 0
