@@ -78,22 +78,16 @@ else
 fi
 
 echo "INFO: Checking YARA path..."
-yara_path=$(find / -type f -name "yara" 2>/dev/null | grep -m1 "/yara$")
-
 if [ -f "/usr/bin/yara" ]; then
-    echo "INFO: YARA exists in /usr/bin"
+    yara_path="/usr/bin/yara"
+    echo "INFO: Found YARA at: $yara_path"
+elif [ -f "/usr/local/bin/yara" ]; then
+    yara_path="/usr/local/bin/yara"
+    echo "INFO: Found YARA at: $yara_path"
 else
-    if [ -n "$yara_path" ]; then
-        echo "INFO: Found YARA at: $yara_path"
-        if sudo cp "$yara_path" /usr/bin/; then
-            echo "Successfully copied yara to /usr/bin"
-        else
-            echo "Error: Failed to copy yara to /usr/bin"
-        fi
-    else
-        echo "ERROR: YARA not found. Reinstalling from source..."
-        install_yara_from_source
-    fi
+    echo "ERROR: YARA not found. Reinstalling from source..."
+    install_yara_from_source
+    yara_path="/usr/bin/yara" # Asumsi lokasi setelah instalasi dari source
 fi
 
 # Git repository setup
