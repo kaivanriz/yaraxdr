@@ -23,7 +23,9 @@ Yara XDR for Wazuh
 # cd /home/yaraxdr
 # bash setup.sh
 ```
-3. Install Auditd
+
+4. Install Auditd
+
 For RHEL Based
 ``` bash
 # yum install audit 
@@ -39,7 +41,7 @@ or
 # /etc/init.d/auditd restart
 ```
 
-4. Configure Wazuh Agent
+5. Configure Wazuh Agent
 ``` bash
 # nano /var/ossec/etc/ossec.conf
 ```
