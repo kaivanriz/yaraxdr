@@ -25,20 +25,31 @@ install_build_dependencies() {
             sudo apt install -y build-essential automake libtool pkg-config wget git libssl-dev libjansson-dev libmagic-dev
             ;;
         "centos"|"rhel"|"fedora"|"almalinux"|"rocky")
-            sudo dnf groupinstall -y "Development Tools"
-            sudo dnf install -y automake libtool pkgconf-pkg-config wget git openssl-devel jansson-devel file-devel
+            # Try dnf first (modern package manager)
+            if command -v dnf &> /dev/null; then
+                sudo dnf groupinstall -y "Development Tools"
+                sudo dnf install -y automake libtool pkgconf-pkg-config wget git openssl-devel jansson-devel file-devel
+            # Fallback to yum if dnf is not available
+            elif command -v yum &> /dev/null; then
+                echo "dnf not found, falling back to yum..."
+                sudo yum groupinstall -y "Development Tools"
+                sudo yum install -y automake libtool pkgconfig wget git openssl-devel jansson-devel file-devel
+            else
+                echo "Error: Neither dnf nor yum package manager found"
+                return 1
+            fi
             ;;
         "macos")
-            brew install automake libtool pkg-config wget
+            brew install automake libtool pkg-config wget jansson
             ;;
     esac
 }
 
 install_yara_from_source() {
     install_build_dependencies
-    wget -N https://github.com/VirusTotal/yara/archive/refs/tags/v4.5.1.tar.gz
-    tar -zxf v4.5.1.tar.gz
-    cd yara-4.5.1 || exit 1
+    wget -N https://github.com/VirusTotal/yara/archive/refs/tags/v4.1.3.tar.gz
+    tar -zxf v4.1.3.tar.gz
+    cd yara-4.1.3 || exit 1
     autoreconf -fi
     ./configure --enable-magic --enable-cuckoo --enable-dotnet
     make
@@ -52,7 +63,7 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-install_yara_linux() {
+install_yara_rhel() {
     if command_exists dnf; then
         sudo dnf install -y yara
     else
@@ -70,7 +81,7 @@ if command_exists yara; then
 else
     case "$OS_FAMILY" in
         "ubuntu"|"debian") sudo apt update && sudo apt install -y yara ;;
-        "centos"|"rhel"|"fedora"|"almalinux"|"rocky") install_yara_linux ;;
+        "centos"|"rhel"|"fedora"|"almalinux"|"rocky") install_yara_rhel ;;
         "macos") install_yara_macos ;;
         *) install_yara_from_source ;;
     esac
