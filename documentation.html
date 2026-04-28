@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panduan Instalasi Wazuh Agent dan YARA</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.5;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 850px;
+            margin: 10px auto;
+            background: white;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 15px;
+            page-break-after: avoid;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            font-size: 13px;
+        }
+        
+        .section {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+        
+        .section h2 {
+            color: #2c3e50;
+            font-size: 18px;
+            margin-bottom: 12px;
+            border-left: 4px solid #3498db;
+            padding-left: 10px;
+            page-break-after: avoid;
+        }
+        
+        .section h3 {
+            color: #34495e;
+            font-size: 14px;
+            margin-top: 12px;
+            margin-bottom: 8px;
+            page-break-after: avoid;
+        }
+        
+        .section p {
+            margin-bottom: 8px;
+            text-align: justify;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .info-box {
+            background: #ecf0f1;
+            border-left: 3px solid #3498db;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-size: 12px;
+            page-break-inside: avoid;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border-left: 3px solid #ff9800;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-size: 12px;
+            page-break-inside: avoid;
+        }
+        
+        .success-box {
+            background: #d4edda;
+            border-left: 3px solid #27ae60;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-size: 12px;
+            page-break-inside: avoid;
+        }
+        
+        code {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 2px 5px;
+            border-radius: 2px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            word-break: break-all;
+        }
+        
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 8px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            line-height: 1.3;
+            border-left: 3px solid #3498db;
+            page-break-inside: avoid;
+        }
+        
+        ol, ul {
+            margin-left: 20px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        li {
+            margin-bottom: 6px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 12px;
+            page-break-inside: avoid;
+        }
+        
+        table th {
+            background: #2c3e50;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 11px;
+        }
+        
+        table td {
+            padding: 8px;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 12px;
+        }
+        
+        table tr:hover {
+            background: #f9f9f9;
+        }
+        
+        .footer {
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #ecf0f1;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 11px;
+            page-break-inside: avoid;
+        }
+        
+        .button-container {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+        }
+        
+        button {
+            background: #3498db;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #2980b9;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #ecf0f1;
+            margin: 12px 0;
+            page-break-inside: avoid;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                margin: 0;
+                padding: 20px;
+            }
+            .button-container {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="content">
+        <div class="header">
+            <h1>Panduan Instalasi Wazuh Agent dan YARA</h1>
+            <p>Versi 1.0 | November 2025</p>
+        </div>
+        
+        <div class="section">
+            <h2>Pendahuluan</h2>
+            <p>Panduan ini menyediakan langkah-langkah lengkap untuk menginstal Wazuh Agent versi 4.13.0 dan YARA di sistem Anda. Wazuh Agent berfungsi sebagai agen monitoring yang mengumpulkan informasi keamanan, sementara YARA adalah mesin pendeteksi malware berbasis aturan.</p>
+        </div>
+        
+        <div class="section">
+            <h2>Bagian 1: Instalasi YARA</h2>
+            
+            <h3>1.1 Persyaratan Sistem</h3>
+            <div class="info-box">
+                <strong>OS yang Didukung:</strong><br>
+                • Ubuntu/Debian<br>
+                • CentOS/RHEL/Fedora<br>
+                • AlmaLinux/Rocky Linux
+            </div>
+            
+            <h3>1.2 Repository YARA</h3>
+            <p>YARA akan diinstal dari repository GitHub:</p>
+            <div class="info-box">
+                <code>https://github.com/kaivanriz/yaraxdr.git</code>
+            </div>
+            
+            <h3>1.3 Langkah-langkah Instalasi</h3>
+            <p><strong>Langkah 1:</strong> Clone repository YARA</p>
+            <div class="code-block">git clone https://github.com/kaivanriz/yaraxdr.git</div>
+            
+            <p><strong>Langkah 2:</strong> Masuk ke direktori YARA</p>
+            <div class="code-block">cd yaraxdr</div>
+            
+            <p><strong>Langkah 3:</strong> Baca dokumentasi lengkap</p>
+            <p>Dokumentasi detail tersedia di repository. Ikuti instruksi instalasi sesuai README.md untuk konfigurasi spesifik sistem Anda.</p>
+            <div class="info-box">
+                <strong>Dokumentasi:</strong><br>
+                <code>https://github.com/kaivanriz/yaraxdr/blob/main/README.md</code>
+            </div>
+            
+            <h3>1.4 Verifikasi Instalasi YARA</h3>
+            <p>Setelah instalasi selesai, verifikasi dengan perintah:</p>
+            <div class="code-block">yara --version</div>
+        </div>
+        
+        <div class="section">
+            <h2>Bagian 2: Instalasi Wazuh Agent 4.13.0</h2>
+            
+            <h3>2.1 Informasi Konfigurasi</h3>
+            <table>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Nilai</th>
+                </tr>
+                <tr>
+                    <td>Versi Wazuh Agent</td>
+                    <td>4.13.0</td>
+                </tr>
+                <tr>
+                    <td>Manager IP Address</td>
+                    <td>172.16.10.196</td>
+                </tr>
+                <tr>
+                    <td>Tipe Agent</td>
+                    <td>x86_64 (Linux)</td>
+                </tr>
+            </table>
+            
+            <h3>2.2 Instalasi untuk CentOS, RHEL, Fedora, AlmaLinux, Rocky Linux</h3>
+            
+            <p><strong>Langkah 1:</strong> Download package Wazuh Agent</p>
+            <div class="code-block">curl -o wazuh-agent-4.13.0-1.x86_64.rpm https://packages.wazuh.com/4.x/yum/wazuh-agent-4.13.0-1.x86_64.rpm</div>
+            
+            <p><strong>Langkah 2:</strong> Instal dengan konfigurasi manager</p>
+            <div class="code-block">sudo WAZUH_MANAGER='172.16.10.196' rpm -ihv wazuh-agent-4.13.0-1.x86_64.rpm</div>
+            
+            <h3>2.3 Instalasi untuk Ubuntu dan Debian</h3>
+            
+            <p><strong>Langkah 1:</strong> Download package Wazuh Agent</p>
+            <div class="code-block">wget https://packages.wazuh.com/4.x/apt/pool/main/w/wazuh-agent/wazuh-agent_4.13.0-1_amd64.deb</div>
+            
+            <p><strong>Langkah 2:</strong> Instal dengan konfigurasi manager</p>
+            <div class="code-block">sudo WAZUH_MANAGER='172.16.10.196' dpkg -i ./wazuh-agent_4.13.0-1_amd64.deb</div>
+            
+            <h3>2.4 Verifikasi Instalasi Wazuh Agent</h3>
+            <p>Setelah instalasi selesai, verifikasi status agent:</p>
+            <div class="code-block">sudo systemctl status wazuh-agent</div>
+            
+            <div class="success-box">
+                <strong>Status Berhasil:</strong> Agent harus menunjukkan status <code>active (running)</code>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Bagian 3: Konfigurasi Lanjutan</h2>
+            
+            <h3>3.1 Lokasi File Konfigurasi</h3>
+            <div class="info-box">
+                <strong>Path konfigurasi Wazuh:</strong><br>
+                <code>/var/ossec/etc/ossec.conf</code>
+            </div>
+            
+            <h3>3.2 Menjalankan Wazuh Agent</h3>
+            <div class="code-block">sudo systemctl start wazuh-agent
+sudo systemctl enable wazuh-agent</div>
+            
+            <h3>3.3 Melihat Log Agent</h3>
+            <div class="code-block">sudo tail -f /var/ossec/logs/ossec.log</div>
+        </div>
+        
+        <div class="section">
+            <h2>Bagian 4: Troubleshooting</h2>
+            
+            <h3>4.1 Masalah Koneksi Manager</h3>
+            <div class="warning-box">
+                <strong>Jika agent tidak terhubung ke manager:</strong><br><br>
+                1. Verifikasi IP manager: <code>172.16.10.196</code><br>
+                2. Pastikan firewall tidak memblokir port komunikasi (default: 1514)<br>
+                3. Periksa status layanan: <code>sudo systemctl status wazuh-agent</code><br>
+                4. Lihat log error: <code>sudo tail -f /var/ossec/logs/ossec.log</code>
+            </div>
+            
+            <h3>4.2 Restart Agent</h3>
+            <div class="code-block">sudo systemctl restart wazuh-agent</div>
+            
+            <h3>4.3 Uninstal Agent</h3>
+            <p><strong>Untuk RHEL/CentOS:</strong></p>
+            <div class="code-block">sudo rpm -e wazuh-agent</div>
+            
+            <p><strong>Untuk Ubuntu/Debian:</strong></p>
+            <div class="code-block">sudo dpkg -r wazuh-agent</div>
+        </div>
+        
+        <div class="section">
+            <h2>Bagian 5: Referensi</h2>
+            <table>
+                <tr>
+                    <th>Komponen</th>
+                    <th>Link</th>
+                </tr>
+                <tr>
+                    <td>Repository YARA XDR</td>
+                    <td><code>https://github.com/kaivanriz/yaraxdr.git</code></td>
+                </tr>
+                <tr>
+                    <td>Dokumentasi YARA</td>
+                    <td><code>https://github.com/kaivanriz/yaraxdr/blob/main/README.md</code></td>
+                </tr>
+                <tr>
+                    <td>Package Wazuh RPM</td>
+                    <td><code>https://packages.wazuh.com/4.x/yum/</code></td>
+                </tr>
+                <tr>
+                    <td>Package Wazuh DEB</td>
+                    <td><code>https://packages.wazuh.com/4.x/apt/</code></td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="section">
+            <h2>Bagian 6: Checklist Instalasi</h2>
+            <ul>
+                <li>☐ YARA berhasil diunduh dan diinstal</li>
+                <li>☐ Verifikasi YARA dengan perintah <code>yara --version</code></li>
+                <li>☐ Wazuh Agent 4.13.0 berhasil diunduh</li>
+                <li>☐ Manager IP dikonfigurasi ke <code>172.16.10.196</code></li>
+                <li>☐ Agent berhasil diinstal</li>
+                <li>☐ Status agent menunjukkan <code>active (running)</code></li>
+                <li>☐ Konfigurasi firewall memungkinkan komunikasi</li>
+                <li>☐ Agent terhubung ke manager</li>
+            </ul>
+        </div>
+        
+        <div class="footer">
+            <p>Panduan Instalasi Wazuh Agent dan YARA | Dibuat: November 2025</p>
+            <p>Untuk informasi lebih lanjut, silakan merujuk pada dokumentasi resmi masing-masing project.</p>
+        </div>
+    </div>
+    
+    <div class="button-container">
+        <button onclick="downloadPDF()">📥 Download sebagai PDF</button>
+    </div>
+    
+    <script>
+        function downloadPDF() {
+            const element = document.getElementById('content');
+            const opt = {
+                margin: [8, 8, 8, 8],
+                filename: 'Panduan-Instalasi-Wazuh-Agent-dan-YARA.pdf',
+                image: { type: 'jpeg', quality: 0.95 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>
