@@ -102,13 +102,6 @@ update_repo_neo() {
 
     cd "$BASE_DIR" || die "Gagal masuk ke direktori $BASE_DIR."
 
-    # Pastikan remote 'origin' mengarah ke repo Neo23x0
-    if ! git remote get-url origin &>/dev/null; then
-        git remote add origin "$REPO_NEO_URL"
-    else
-        git remote set-url origin "$REPO_NEO_URL"
-    fi
-
     # Deteksi branch default dari remote tanpa memicu fatal error di log
     local default_branch
     default_branch=$(git remote show origin 2>/dev/null | awk '/HEAD branch/ {print $NF}')
